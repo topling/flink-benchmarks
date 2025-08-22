@@ -1,6 +1,172 @@
+# 1. flink will search config.yaml in the env FLINK_CONF_DIR
+# 2. ${FLINK_CONF_DIR}/config.yaml is the flink default conf file
+# 3. This file is the standard configuration for flink
+# 4. This file is the standard configuration flink
+# 5. This file is servered for both ToplingDB and RocksDB
+# 6. flink     will ignore unknown section
+# 7. ToplingDB will ignore unknown section
+# 8. RocksDB   will ignore unknown section
 
+# RocksDB configurations:
 state.backend.rocksdb.block.blocksize: 4kb
 state.backend.rocksdb.block.cache-size: 8gb
 state.backend.rocksdb.use-bloom-filter: true
 state.backend.rocksdb.writebuffer.size: 128mb
 state.backend.rocksdb.writebuffer.count: 4
+
+# ToplingDB configurations:
+Cache:
+  lru_cache:
+    class: LRUCache
+    params:
+      capacity: 16G
+      #num_shard_bits: -1 # max is 6, mostly is 6
+      #strict_capacity_limit: false
+      #high_pri_pool_ratio: 0.5 # default is 0
+      #use_adaptive_mutex: false
+      #metadata_charge_policy: kFullChargeCacheMetadata
+MemTableRepFactory:
+  cspp:
+    class: CSPPMemTab # canonical class name
+    params:
+      mem_cap: 3G  # just reserve virtual address space
+      cspp_debug_level: 1
+      # vm_explicit_commit: true # default false
+      # vm_background_commit: false # default false
+      chunk_size: 256K # default 2M
+      use_vm: true # default is true
+      # use_hugepage: false # equivalent to kNone, default
+      # use_hugepage: true  # equivalent to kMmap
+      # use_hugepage: kNone # default, dont use hugepage
+      # use_hugepage: kMmap # mmap(MAP_HUGETLB)
+      # use_hugepage: kTransparent # mmap(normal) + madvise(MADV_HUGEPAGE)
+      # convert_to_sst: kDontConvert
+      # convert_to_sst: kDumpMem
+      convert_to_sst: kFileMmap
+  skiplist:
+    class: SkipList
+    params:
+      lookahead: 0
+FilterPolicy:
+  bloom:
+    class: BloomFilter
+    params:
+      bits_per_key: 10
+      use_block_based_builder: false
+TableFactory:
+  fast:
+    class: SingleFastTable
+    params:
+      indexType: MainPatricia
+      keyPrefixLen: 0
+  zip:
+    class: ToplingZipTable
+    params:
+      localTempDir: /dev/shm
+      indexNestLevel: 2
+      enableStatistics: false
+      warmupLevel: kIndex
+      acceptCompressionRatio: 0.8
+      offsetArrayBlockUnits: 128
+      sampleRatio: 0.01
+      checksumLevel: 0
+      debugLevel: 0
+      minDictZipValueSize: 30
+      minPreadLen: -1
+  bb:
+    class: BlockBasedTable
+    params:
+      block_size: 4K
+      block_restart_interval: 16
+      index_block_restart_interval: 1
+      metadata_block_size: 4K
+      block_cache: "${lru_cache}"
+      filter_policy: "${bloom}"
+  cspp_memtab_sst:
+    class: CSPPMemTabTable
+    params: # empty params
+  dispatch:
+    class: DispatcherTable
+    params:
+      default: fast
+      readers:
+        SingleFastTable: fast
+        ToplingZipTable: zip
+        BlockBasedTable: bb
+        CSPPMemTabTable: cspp_memtab_sst
+      level_writers: [fast, fast, zip, zip, zip, zip, zip, zip]
+  dispatch_all_fast:
+    class: DispatcherTable
+    params:
+      default: fast
+      readers:
+        SingleFastTable: fast
+        ToplingZipTable: zip
+        BlockBasedTable: bb
+        CSPPMemTabTable: cspp_memtab_sst
+      level_writers: [fast, fast, fast, fast, fast, fast, fast]
+  dispatch_fast_bb:
+    class: DispatcherTable
+    params:
+      default: fast
+      readers:
+        SingleFastTable: fast
+        ToplingZipTable: zip
+        BlockBasedTable: bb
+        CSPPMemTabTable: cspp_memtab_sst
+      level_writers: [fast, fast, bb, bb, bb, bb, bb]
+WriteBufferManager:
+  wbm:
+    class: WriteBufferManager
+    params:
+      buffer_size: 4G
+CFOptions:
+  default:
+    #enable_blob_files: true
+    #min_blob_size: 200
+    #enable_blob_garbage_collection: true
+    max_write_buffer_number: 4
+    disable_auto_compactions: true
+    #memtable_factory: "${skiplist}"
+    memtable_factory: "${cspp}"
+    write_buffer_size: 128M # 2G  # 64m, rocksdb recommend small, toplingdb recommend large
+    target_file_size_base: 32M
+    #target_file_size_multiplier: 2
+    #table_factory: dispatch
+    table_factory: dispatch_all_fast
+    #table_factory: dispatch_fast_bb
+    max_bytes_for_level_base: 256M # default = max(256M, write_buffer_size)
+    max_bytes_for_level_multiplier: 10
+    ########
+    # For ToplingDB distributed compaction, this should set to false
+    #level_compaction_dynamic_level_bytes: false # rocksdb-8.04 default true
+    #level_compaction_dynamic_level_bytes: true # rocksdb-8.04 default true
+    level0_slowdown_writes_trigger: 20
+    level0_stop_writes_trigger: 36
+    level0_file_num_compaction_trigger: 4
+    compression: kSnappyCompression
+    compression_per_level:
+    - kNoCompression
+    - kSnappyCompression
+    - kSnappyCompression
+    - kSnappyCompression
+    - kSnappyCompression
+    - kSnappyCompression
+    - kZSTD
+DBOptions:
+  dbo:
+    #memtable_as_log_index: true # flink disabled WAL, this feature is not needed
+    #max_total_wal_size: 4G # company with memtable_as_log_index
+    #allow_fallocate: false # default true
+    #allow_fdatasync: false # default true
+    create_if_missing: true
+    create_missing_column_families: true
+    #enable_pipelined_write: true # must be false if unordered_write is true
+    #info_log_level: DEBUG_LEVEL
+    max_background_flushes: 1 # default is -1
+    max_background_compactions: 3 # default is -1
+    max_subcompactions: 1 # default is 1
+    #max_level1_subcompactions: 3 # default 0 to use max_subcompactions
+    inplace_update_support: false # default is false
+    #write_buffer_manager: "${wbm}"
+    #WAL_size_limit_MB: 0
