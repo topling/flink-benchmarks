@@ -1,0 +1,6 @@
+
+state.backend.rocksdb.block.blocksize: 4kb
+state.backend.rocksdb.block.cache-size: 8gb
+state.backend.rocksdb.use-bloom-filter: true
+state.backend.rocksdb.writebuffer.size: 128mb
+state.backend.rocksdb.writebuffer.count: 4
