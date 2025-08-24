@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 # usage:
-# env EMAIL=YourEmail ENGINE=topling[or rocksdb] bash run_benchmark.sh
+# env EMAIL=YourEmail ENGINE=toplingdb[or rocksdb] bash run_benchmark.sh
 
 #set -x
 set -e
@@ -9,7 +9,7 @@ set -e
 export FLINK_CONF_DIR=`realpath .`
 if [ $ENGINE = "toplingdb" ]; then
   export LD_LIBRARY_PATH=`realpath ../ftoplingdb/java/target`:$LD_LIBRARY_PATH
-  export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
+  #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
   export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml
   export SidePluginRepo_DebugLevel=0
   export USE_INTERNAL_UNSAFE=true
@@ -20,7 +20,14 @@ else
   BENCHMARK_VERSION=0.1-rocksdb
   FLINK_VERSION=2.0-SNAPSHOT
 fi
-#mvn package -Dproject.version=${BENCHMARK_VERSION} -Dflink.version=${FLINK_VERSION} -DskipTests -T 1C
+mvn package -Dproject.version=${BENCHMARK_VERSION} -Dflink.version=${FLINK_VERSION} -DskipTests -T 1C
+
+# sysctl kernel.perf_event_paranoid kernel.kptr_restrict kernel.perf_event_max_stack
+# sudo sysctl -w kernel.perf_event_paranoid=-1
+# sudo sysctl -w kernel.kptr_restrict=0
+# sudo sysctl -w kernel.perf_event_max_stack=128
+# echo "Current kernel settings:"
+# sysctl kernel.perf_event_paranoid kernel.kptr_restrict kernel.perf_event_max_stack
 
 #LIB_ASYNC_PROFILER=`realpath ../async-profiler-3.0-linux-x64/lib/libasyncProfiler.so`
 ASYNC_HOME=`realpath ../async-profiler-4.1-linux-x64`

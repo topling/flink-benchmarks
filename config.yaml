@@ -31,7 +31,7 @@ MemTableRepFactory:
     params:
       mem_cap: 3G  # just reserve virtual address space
       cspp_debug_level: 1
-      # vm_explicit_commit: true # default false
+      vm_explicit_commit: true # default false
       # vm_background_commit: false # default false
       chunk_size: 256K # default 2M
       use_vm: true # default is true
@@ -41,8 +41,8 @@ MemTableRepFactory:
       # use_hugepage: kMmap # mmap(MAP_HUGETLB)
       # use_hugepage: kTransparent # mmap(normal) + madvise(MADV_HUGEPAGE)
       # convert_to_sst: kDontConvert
-      # convert_to_sst: kDumpMem
-      convert_to_sst: kFileMmap
+      convert_to_sst: kDumpMem
+      # convert_to_sst: kFileMmap
   skiplist:
     class: SkipList
     params:
@@ -165,7 +165,6 @@ DBOptions:
     #info_log_level: DEBUG_LEVEL
     max_background_flushes: 1 # default is -1
     max_background_compactions: 3 # default is -1
-    max_subcompactions: 1 # default is 1
     #max_level1_subcompactions: 3 # default 0 to use max_subcompactions
     inplace_update_support: false # default is false
     #write_buffer_manager: "${wbm}"
