@@ -1,8 +1,27 @@
+This repo is forked from [apache/flink-benchmarks](https://github.com/apache/flink-benchmarks) with very little changes.
+# Run with ToplingDB
+First clone [topling modified flink](https://github.com/topling/flink)(very little changes):
+```bash
+git clone https://github.com/topling/flink.git
+cd flink
+# other jdk also works ok, such as jdk17/11
+./mvnw install -DskipTests -Djdk21 -Pjava21-target -T 2C
+```
+Then:
+```bash
+git clone https://github.com/topling/flink-benchmarks.git
+cd flink-benchmarks
+# EMAIL is optional, if set, the benchmark result will be sent
+env EMAIL=your-email@xxx.com ENGINE=toplingdb bash run-benchmark.sh
+```
+The bundled script [run-benchmark.sh](run-benchmark.sh) is structured to be easily changed, you can
+change it for your need, esp. the benchmark items.
+
 # flink-benchmarks
 
-This repository contains sets of micro benchmarks designed to run on single machine to help 
-[Apache Flink's](https://github.com/apache/flink) developers assess performance implications of 
-their changes. 
+This repository contains sets of micro benchmarks designed to run on single machine to help
+[Apache Flink's](https://github.com/apache/flink) developers assess performance implications of
+their changes.
 
 The main methods defined in the various classes (test cases) are using [jmh](http://openjdk.java.net/projects/code-tools/jmh/)  micro
 benchmark suite to define runners to execute those test cases. You can execute the
@@ -39,7 +58,7 @@ There're mainly three ways:
     ```
     java -jar target/benchmarks.jar -rf csv "<benchmark_class>"
     ```
-   
+
     When using uber jar with Java 17, you may need add arguments in command like:
 
     ```
@@ -56,20 +75,20 @@ mvn test -P test
 
 These benchmarks can be managed by Jenkins and represent result by Codespeed. There are `jenkinsfile`'s in `jenkinsfiles` folder
 that contains prepared scripts for that. The scripts can be configured in Jenkins in `Pipeline` section with `Pipeline script from SCM` definition.
-Scripts can contain parameters which should be parametrized in `Jenkins` build. 
+Scripts can contain parameters which should be parametrized in `Jenkins` build.
 For the detailed information take a look at the description of specific script.
-The url of the Codespeed isn't parametrized and it should be changed directly in script.  
+The url of the Codespeed isn't parametrized and it should be changed directly in script.
 
 ## Parameters
 
 There are some built-in parameters to run different benchmarks, these can be shown/overridden from the command line.
 
 ```
-# show all the parameters combination for the <benchmark_class> 
+# show all the parameters combination for the <benchmark_class>
 java -jar target/benchmarks.jar "<benchmark_class>" -lp
 
-# run benchmark for rocksdb state backend type 
-java -jar target/benchmarks.jar "org.apache.flink.state.benchmark.*" -p "backendType=ROCKSDB" 
+# run benchmark for rocksdb state backend type
+java -jar target/benchmarks.jar "org.apache.flink.state.benchmark.*" -p "backendType=ROCKSDB"
 ```
 
 ## Generating Flame graphs
@@ -83,13 +102,13 @@ java -jar target/benchmarks.jar -rf csv "<benchmark_class>" -DasyncProfilerLib=<
 
 or directly
 ```
-java -jar target/benchmarks.jar -prof async:libPath=<PATH_TO_libasyncProfiler.*>;output=flamegraph "<benchmark_class>" 
+java -jar target/benchmarks.jar -prof async:libPath=<PATH_TO_libasyncProfiler.*>;output=flamegraph "<benchmark_class>"
 ```
 
 ## Configuration
 
-Besides the parameters, there is also a benchmark config file `benchmark-conf.yaml` to tune some basic parameters. 
-For example, we can change the state data dir by putting `benchmark.state.data-dir: /data` in the config file. For more options, you can refer to the code in the `org.apache.flink.config` package. 
+Besides the parameters, there is also a benchmark config file `benchmark-conf.yaml` to tune some basic parameters.
+For example, we can change the state data dir by putting `benchmark.state.data-dir: /data` in the config file. For more options, you can refer to the code in the `org.apache.flink.config` package.
 
 ## Prerequisites
 
