@@ -120,6 +120,10 @@ WriteBufferManager:
     class: WriteBufferManager
     params:
       buffer_size: 4G
+MergeOperator:
+  the_stringappendtest:
+   class: stringappendtest
+   params: # not needed
 CFOptions:
   default:
     #enable_blob_files: true
