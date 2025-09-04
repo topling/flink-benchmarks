@@ -7,12 +7,42 @@
 set -e
 
 export FLINK_CONF_DIR=`realpath .`
-if [ $ENGINE = "toplingdb" ]; then
-  export LD_LIBRARY_PATH=`realpath ../ftoplingdb/java/target`:$LD_LIBRARY_PATH
+doc_root=`awk '$1 == "document_root:"{print $2}' config.yaml`
+shopt -s extglob
+shopt -s globstar
+rm -rf "${doc_root}"/benchmark+([0-9])
+
+if [ "$ENGINE" = "toplingdb" ]; then
   #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
   export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml
   export SidePluginRepo_DebugLevel=0
   export USE_INTERNAL_UNSAFE=true
+  if [ -f ../ftoplingdb/java/target/librocksdbjni-linux64.so ]; then
+    export LD_LIBRARY_PATH=`realpath ../ftoplingdb/java/target`:$LD_LIBRARY_PATH
+    cp ../ftoplingdb/java/target/{index.html,style.css} ${doc_root}
+  elif [ -f frocksdbjni-8.10.2-topling-1.0/librocksdbjni-linux64.so ]; then
+    cp frocksdbjni-8.10.2-topling-1.0/{index.html,style.css} ${doc_root}
+    if pgrep dcompact_worker; then
+      echo dcompact_worker is running, enable dcompact
+      sed -i 's/compaction_executor_factory_disabled: dcompact/compaction_executor_factory: dcompact/' config.yaml
+    else
+      echo dcompact_worker is not running, disable dcompact
+      sed -i 's/compaction_executor_factory: dcompact/compaction_executor_factory_disabled: dcompact/' config.yaml
+    fi
+  else
+    echo search librocksdbjni-linux64.so in system path or in frocksdbjni-8.10.2-topling-1.0.jar
+    echo if dcompact_worker is online, it will be used, if not, it will fallback to local compaction
+    ( # run in a sub shell
+      cd ${doc_root}
+      if [ -f index.html -a -f style.css ]; then
+        echo index.html and style.css exist, skip download
+      else
+        # download fail is not a fatal error
+        wget https://github.com/topling/toplingdb/releases/download/topling-8.10.2-frocks-1.0/index.html \
+             https://github.com/topling/toplingdb/releases/download/topling-8.10.2-frocks-1.0/style.css
+      fi
+    )
+  fi
   BENCHMARK_VERSION=0.1-toplingdb
   FLINK_VERSION=2.0-topling-1.0
 else
@@ -20,6 +50,7 @@ else
   BENCHMARK_VERSION=0.1-rocksdb
   FLINK_VERSION=2.0-SNAPSHOT
 fi
+# comment this mvn line out if it has been done
 mvn package -Dproject.version=${BENCHMARK_VERSION} -Dflink.version=${FLINK_VERSION} -DskipTests -T 1C
 
 # sysctl kernel.perf_event_paranoid kernel.kptr_restrict kernel.perf_event_max_stack
@@ -71,6 +102,9 @@ args=(
   #org.apache.flink.state.benchmark.MapStateBenchmark.mapContains
   #org.apache.flink.state.benchmark.ttl.TtlListStateBenchmark.listAppend
 )
+echo -e '\033[31m###########################################################################\033[0m'
+echo -e '\033[31m####\033[0m  StateBackend ToplingDB consol: \033[1;34mhttp://127.0.0.1:2013\033[0m'
+echo -e '\033[31m###########################################################################\033[0m'
 java ${args[@]} $@ 2>&1 | tee ${LOG_FILE}
 
 function ArrayContains() {

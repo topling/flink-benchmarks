@@ -141,6 +141,7 @@ CFOptions:
     # For ToplingDB distributed compaction, this should set to false
     #level_compaction_dynamic_level_bytes: false # rocksdb-8.04 default true
     #level_compaction_dynamic_level_bytes: true # rocksdb-8.04 default true
+    compaction_executor_factory: dcompact
     level0_slowdown_writes_trigger: 20
     level0_stop_writes_trigger: 36
     level0_file_num_compaction_trigger: 4
@@ -169,3 +170,37 @@ DBOptions:
     inplace_update_support: false # default is false
     #write_buffer_manager: "${wbm}"
     #WAL_size_limit_MB: 0
+CompactionExecutorFactory:
+  dcompact:
+    class: DcompactEtcd
+    params:
+      allow_fallback_to_local: true
+      #info_log_level: DEBUG_LEVEL
+      estimate_speed: 10M
+      timeout_multiplier: 5.0
+      hoster_root: /tmp/flink-benchmark
+      # in flink-benchmarks, this should be same with filename part
+      # of config key "benchmark.state.data-dir" in file
+      #   src/main/resources/benchmark-conf.yaml
+      instance_name: flink-benchmark
+      nfs_mnt_src: static-mounted
+      #nfs_mnt_opt: ""
+      alert_email: 20409170@qq.com
+      #alert_http: https://dcompact.alert.com/dcompact-alert
+      #web_domain: topling.in # this is for front end of compact cluster
+      overall_timeout: 30
+      http_max_retry: 3
+      http_timeout: 1
+      http_workers:
+        - { url: http://127.0.0.1:8080, weight: 50 }
+        # - { url: http://other.small.host:8080, weight: 100 }
+        # - { url: http://other.large.host:8080, weight: 200 }
+      #load_balance: kRoundRobin
+      load_balance: kWeight
+      dcompact_min_level: 1
+http:
+  document_root: /tmp/flink-benchmark
+  hide_files_patterns: "*.sst|*.dbtmp"
+  num_threads: 50
+  listening_ports: "2013"
+  auto_start_http: true

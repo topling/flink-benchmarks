@@ -11,6 +11,7 @@ Then:
 ```bash
 git clone https://github.com/topling/flink-benchmarks.git
 cd flink-benchmarks
+bash run-dcompact.sh # optional, run a distributed compaction service
 # EMAIL is optional, if set, the benchmark result will be sent
 env EMAIL=your-email@xxx.com ENGINE=toplingdb bash run-benchmark.sh
 ```
