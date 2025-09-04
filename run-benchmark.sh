@@ -12,7 +12,6 @@ if [ $ENGINE = "toplingdb" ]; then
   #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
   export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml
   export SidePluginRepo_DebugLevel=0
-  export FLINK_TOPLING_USE_DCOMPACT=true
   export USE_INTERNAL_UNSAFE=true
   BENCHMARK_VERSION=0.1-toplingdb
   FLINK_VERSION=2.0-topling-1.0
