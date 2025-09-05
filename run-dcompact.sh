@@ -68,12 +68,31 @@ else
   if [ ! -f frocksdbjni-8.10.2-topling-1.0/librocksdbjni-linux64.so ]; then
     rm -rf frocksdbjni-8.10.2-topling-1.0*
     mkdir frocksdbjni-8.10.2-topling-1.0
-    wget https://github.com/topling/toplingdb/releases/download/topling-8.10.2-frocks-1.0/frocksdbjni-8.10.2-topling-1.0.jar
+    TOPLING_JAR=${HOME}/.m2/repository/cn/topling/frocksdbjni/8.10.2-topling-1.0/frocksdbjni-8.10.2-topling-1.0.jar
+    if [ ! -f ${TOPLING_JAR} ]; then
+      echo -e '###########################################################################'
+      echo -e '#### It seems you have not installed \033[1;31mtopling flink\033[0m'
+      echo -e '###########################################################################'
+      echo 'Please run following commands first:
+    cd ..
+    git clone https://github.com/topling/flink.git
+    cd flink
+
+    # other jdk also works ok, such as jdk17/11
+    ./mvnw clean install -DskipTests -Djdk21 -Pjava21-target -T 2C
+
+    cd - # back to this directory and continue
+  '
+      exit 1
+      # if wget https://github.com/topling/toplingdb/releases/download/topling-8.10.2-frocks-1.0/frocksdbjni-8.10.2-topling-1.0.jar; then
+      #   TOPLING_JAR=frocksdbjni-8.10.2-topling-1.0.jar
+      # fi
+    fi
     (
       cd frocksdbjni-8.10.2-topling-1.0
       #unzip ${HOME}/.m2/repository/cn/topling/frocksdbjni/8.10.2-topling-1.0/frocksdbjni-8.10.2-topling-1.0.jar
-      unzip ../frocksdbjni-8.10.2-topling-1.0.jar
-      find *
+      unzip ${TOPLING_JAR} '*.so' index.html style.css
+      cp index.html style.css $WORKER_DB_ROOT
     )
   fi
   JNI_LIB_DIR=frocksdbjni-8.10.2-topling-1.0
@@ -96,6 +115,17 @@ if [ $type = dbg ]; then
   dbg="gdb --args"
 fi
 #dbg="ldd"
+
+if [ -z "$dbg" ]; then
+  (
+  sleep 0.3
+  echo -e '\033[31m#################################################################\033[0m'
+  echo -e '\033[31m###\033[0m  Compaction Service   stat: \033[1;34mhttp://127.0.0.1:8080/stat  \033[0m  \033[31m###\033[0m'
+  echo -e '\033[31m###\033[0m  Compaction Service   jobs: \033[1;34mhttp://127.0.0.1:8080/list  \033[0m  \033[31m###\033[0m'
+  echo -e '\033[31m###\033[0m  Compaction Service health: \033[1;34mhttp://127.0.0.1:8080/health\033[0m  \033[31m###\033[0m'
+  echo -e '\033[31m#################################################################\033[0m'
+  ) &
+fi
 $dbg ${dcompact} \
     -D listening_ports=8080 -D num_threads=50 \
     -D document_root=$WORKER_DB_ROOT #>> $WORKER_DB_ROOT/stdout 2>> $WORKER_DB_ROOT/stderr
