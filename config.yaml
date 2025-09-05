@@ -196,8 +196,8 @@ CompactionExecutorFactory:
         # - { url: http://other.small.host:8080, weight: 100 }
         # - { url: http://other.large.host:8080, weight: 200 }
       #load_balance: kRoundRobin
-      load_balance: kWeight
-      dcompact_min_level: 1
+      load_balance: kWeight # kWeight is default
+      dcompact_min_level: 1 # here 1 is for demo, should be 2 in production
 http:
   document_root: /tmp/flink-benchmark
   hide_files_patterns: "*.sst|*.dbtmp"

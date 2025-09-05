@@ -11,6 +11,7 @@ doc_root=`awk '$1 == "document_root:"{print $2}' config.yaml`
 shopt -s extglob
 shopt -s globstar
 rm -rf "${doc_root}"/benchmark+([0-9])
+mkdir -p "${doc_root}"
 
 if [ "$ENGINE" = "toplingdb" ]; then
   #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
@@ -97,14 +98,17 @@ args=(
   #org.apache.flink.state.benchmark.ListStateBenchmark.listAddAll
   #org.apache.flink.state.benchmark.MapStateBenchmark
   #org.apache.flink.state.benchmark.MapStateBenchmark.mapAdd
-  org.apache.flink.state.benchmark.MapStateBenchmark.mapGet
+  #org.apache.flink.state.benchmark.MapStateBenchmark.mapGet
   #org.apache.flink.state.benchmark.MapStateBenchmark.mapPutAll
   #org.apache.flink.state.benchmark.MapStateBenchmark.mapContains
-  #org.apache.flink.state.benchmark.ttl.TtlListStateBenchmark.listAppend
+  org.apache.flink.state.benchmark.ttl.TtlListStateBenchmark.listAppend
 )
+(
+sleep 5
 echo -e '\033[31m###########################################################################\033[0m'
 echo -e '\033[31m####\033[0m  StateBackend ToplingDB consol: \033[1;34mhttp://127.0.0.1:2013\033[0m'
 echo -e '\033[31m###########################################################################\033[0m'
+) &
 java ${args[@]} $@ 2>&1 | tee ${LOG_FILE}
 
 function ArrayContains() {
@@ -130,6 +134,7 @@ fi
 mailargs=(
   ${EMAIL}
   -s ${ENGINE}-flink-benchmarks-${HOSTNAME} # subject
+  -A $0
   -A ${LOG_FILE}
   -A config.yaml
 )
