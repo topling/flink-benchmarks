@@ -188,6 +188,7 @@ CompactionExecutorFactory:
       alert_email: 20409170@qq.com
       #alert_http: https://dcompact.alert.com/dcompact-alert
       #web_domain: topling.in # this is for front end of compact cluster
+      job_url_root: http://127.0.0.1:8080
       overall_timeout: 30
       http_max_retry: 3
       http_timeout: 1

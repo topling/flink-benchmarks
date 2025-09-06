@@ -15,6 +15,7 @@ mkdir -p "${doc_root}"
 
 if [ "$ENGINE" = "toplingdb" ]; then
   #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
+  export FLINK_TOPLINGDB_ROOT=${doc_root}
   export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml
   export SidePluginRepo_DebugLevel=0
   export USE_INTERNAL_UNSAFE=true
@@ -105,10 +106,12 @@ args=(
 )
 (
 sleep 5
+echo
 echo -e '\033[31m#####################################################################\033[0m'
 echo -e '\033[31m###\033[0m  StateBackend ToplingDB console: \033[1;34mhttp://127.0.0.1:2013\033[0m        \033[31m###\033[0m'
 echo -e '\033[31m###\033[0m  StateBackend ToplingDB toppage: \033[1;34mhttp://127.0.0.1:2013/props\033[0m  \033[31m###\033[0m'
 echo -e '\033[31m#####################################################################\033[0m'
+echo
 ) &
 java ${args[@]} $@ 2>&1 | tee ${LOG_FILE}
 
