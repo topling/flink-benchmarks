@@ -6,6 +6,7 @@
 # 6. flink     will ignore unknown section
 # 7. ToplingDB will ignore unknown section
 # 8. RocksDB   will ignore unknown section
+# 9. Set env FLINK_TOPLINGDB_CONF=/path/to/this/file for ToplingDB
 
 # RocksDB configurations:
 state.backend.rocksdb.block.blocksize: 4kb
@@ -141,7 +142,7 @@ CFOptions:
     # For ToplingDB distributed compaction, this should set to false
     #level_compaction_dynamic_level_bytes: false # rocksdb-8.04 default true
     #level_compaction_dynamic_level_bytes: true # rocksdb-8.04 default true
-    compaction_executor_factory: dcompact
+    compaction_executor_factory: dcompact # to disable distributed compaction, comment this line
     level0_slowdown_writes_trigger: 20
     level0_stop_writes_trigger: 36
     level0_file_num_compaction_trigger: 4
@@ -198,10 +199,12 @@ CompactionExecutorFactory:
         # - { url: http://other.large.host:8080, weight: 200 }
       #load_balance: kRoundRobin
       load_balance: kWeight # kWeight is default
+      # dcompact_min_level
+      # set to a large value such as 20 also disable distributed compaction
       dcompact_min_level: 1 # here 1 is for demo, should be 2 in production
 http:
   document_root: /tmp/flink-benchmark
   hide_files_patterns: "*.sst|*.dbtmp"
   num_threads: 50
   listening_ports: "2013"
-  auto_start_http: true
+  auto_start_http: true # to disable http server, set it to false

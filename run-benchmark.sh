@@ -15,10 +15,10 @@ mkdir -p "${doc_root}"
 
 if [ "$ENGINE" = "toplingdb" ]; then
   #export LD_PRELOAD=libjemalloc.so:librocksdbjni-linux64.so
-  export FLINK_TOPLINGDB_ROOT=${doc_root}
-  export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml
-  export SidePluginRepo_DebugLevel=0
-  export USE_INTERNAL_UNSAFE=true
+  export FLINK_TOPLINGDB_ROOT=${doc_root} # just for http
+  export FLINK_TOPLINGDB_CONF=${FLINK_CONF_DIR}/config.yaml # required for ToplingDB
+  export SidePluginRepo_DebugLevel=0 # 0 is default
+  export USE_INTERNAL_UNSAFE=true # for toplingdb jni optimization
   if [ -f ../ftoplingdb/java/target/librocksdbjni-linux64.so ]; then
     export LD_LIBRARY_PATH=`realpath ../ftoplingdb/java/target`:$LD_LIBRARY_PATH
     cp ../ftoplingdb/java/target/{index.html,style.css} ${doc_root}
@@ -46,7 +46,7 @@ if [ "$ENGINE" = "toplingdb" ]; then
     )
   fi
   BENCHMARK_VERSION=0.1-toplingdb
-  FLINK_VERSION=2.0-topling-1.0
+  FLINK_VERSION=2.0-topling-1.0 # toplingdb backend version signature
 else
   ENGINE=rocksdb
   BENCHMARK_VERSION=0.1-rocksdb
@@ -78,7 +78,7 @@ LOG_FILE=${ENGINE}-${TIMESTAMP}.log
 args=(
   --add-opens java.base/java.lang=ALL-UNNAMED
   --add-opens java.base/java.nio=ALL-UNNAMED
-  --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
+  --add-opens java.base/jdk.internal.misc=ALL-UNNAMED # optimize ToplingDB
   #-Xss1m
   #-Xcheck:jni
   -XX:+UseFastJNIAccessors
